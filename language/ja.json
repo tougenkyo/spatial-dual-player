@@ -45,5 +45,21 @@
   "status_reset": "設定を初期化しました",
   "restart_msg": "変更を反映するにはアプリを再起動してください。",
   "btn_overwrite": "💾  上書き保存",
-  "status_no_save_path": "保存先未設定。先にセーブしてください。"
+  "status_no_save_path": "保存先未設定。先にセーブしてください。",
+  "ffmpeg_title": "FFmpeg が必要です",
+  "ffmpeg_subtitle": "MP3 / AAC / OPUS の再生には FFmpeg が必要です",
+  "ffmpeg_not_found": "FFmpeg が見つかりませんでした。以下のいずれかの方法で用意してください。",
+  "ffmpeg_auto_label": "① 自動ダウンロード（推奨・約100MB）",
+  "ffmpeg_dl_url_label": "ダウンロード先:",
+  "ffmpeg_dl_btn": "FFmpeg を自動ダウンロード",
+  "ffmpeg_downloading": "ダウンロード中...",
+  "ffmpeg_manual_label": "手動インストール",
+  "ffmpeg_manual_win": "公式サイト: https://ffmpeg.org/download.html\nffmpeg.exe を PATH の通ったフォルダに置いて再起動\n\nPowerShell / ターミナル:\n  winget install ffmpeg",
+  "ffmpeg_manual_other": "macOS:   brew install ffmpeg\nUbuntu:  sudo apt install ffmpeg\nその他:  https://ffmpeg.org/download.html",
+  "ffmpeg_skip_note": "※ スキップすると MP3 / AAC / OPUS は再生できません。WAV / FLAC / OGG / AIFF は使用可能。",
+  "ffmpeg_skip_btn": "スキップ",
+  "ffmpeg_done_title": "完了",
+  "ffmpeg_done_msg": "FFmpeg のインストールが完了しました。\nMP3 / AAC / OPUS が再生できます。",
+  "ffmpeg_failed_msg": "失敗しました。手動でインストールしてください。",
+  "ffmpeg_retry_btn": "再試行"
 }

@@ -45,5 +45,21 @@
   "status_reset": "Settings reset to defaults",
   "restart_msg": "Restart the app to apply the change.",
   "btn_overwrite": "💾  Overwrite",
-  "status_no_save_path": "No save file. Use Save first."
+  "status_no_save_path": "No save file. Use Save first.",
+  "ffmpeg_title": "FFmpeg Required",
+  "ffmpeg_subtitle": "FFmpeg is required to play MP3 / AAC / OPUS",
+  "ffmpeg_not_found": "FFmpeg was not found. Choose one of the options below.",
+  "ffmpeg_auto_label": "① Auto Download (Recommended, ~100MB)",
+  "ffmpeg_dl_url_label": "Download URL:",
+  "ffmpeg_dl_btn": "Download FFmpeg Automatically",
+  "ffmpeg_downloading": "Downloading...",
+  "ffmpeg_manual_label": "Manual Install",
+  "ffmpeg_manual_win": "Official: https://ffmpeg.org/download.html\nPlace ffmpeg.exe in a folder on your PATH and restart.\n\nPowerShell / Terminal:\n  winget install ffmpeg",
+  "ffmpeg_manual_other": "macOS:   brew install ffmpeg\nUbuntu:  sudo apt install ffmpeg\nOther:   https://ffmpeg.org/download.html",
+  "ffmpeg_skip_note": "* Skipping disables MP3 / AAC / OPUS. WAV / FLAC / OGG / AIFF still work.",
+  "ffmpeg_skip_btn": "Skip",
+  "ffmpeg_done_title": "Complete",
+  "ffmpeg_done_msg": "FFmpeg installed.\nMP3 / AAC / OPUS can now be played.",
+  "ffmpeg_failed_msg": "Failed. Please install manually.",
+  "ffmpeg_retry_btn": "Retry"
 }
