@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-python spatial_dual_player.py
+python spatial_multi_player.py
 if %errorlevel% neq 0 (
     echo.
     echo Error: Python is required.
