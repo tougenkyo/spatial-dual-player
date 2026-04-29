@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-spatial_dual_player.py  -  Spatial Dual Player
+binaural_player.py  -  Spatial Dual Player
 対応フォーマット: WAV / FLAC / OGG / AIFF / MP3 / AAC(M4A) / OPUS
 """
 from __future__ import annotations
@@ -256,9 +256,8 @@ class PlayMode(Enum):
 
 @dataclass
 class BinauralPosition:
-    azimuth:   float
-    elevation: float
-    distance:  float
+    azimuth:  float
+    distance: float
 
 
 @dataclass(frozen=True)
@@ -316,7 +315,7 @@ def download_ffmpeg_windows(progress_cb=None) -> bool:
 
         with zipfile.ZipFile(str(tmp_zip), "r") as zf:
             for name in zf.namelist():
-                if name.endswith("bin/ffmpeg.exe") or name.endswith("bin/ffprobe.exe"):
+                if name.endswith("bin/ffmpeg.exe"):
                     (_FFMPEG_DIR / Path(name).name).write_bytes(zf.read(name))
 
         tmp_zip.unlink(missing_ok=True)
@@ -334,7 +333,7 @@ def download_ffmpeg_windows(progress_cb=None) -> bool:
 class FFmpegSetupDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
-        self.title("FFmpeg Required")
+        self.title(_t("ffmpeg_title"))
         self.resizable(False, False)
         self.grab_set()
         self.result = False
@@ -343,55 +342,68 @@ class FFmpegSetupDialog(tk.Toplevel):
 
     def _build(self):
         is_win = platform.system() == "Windows"
-        tk.Label(self, text="FFmpeg is required to play MP3 / AAC / OPUS",
-                 font=("", 11, "bold")).pack(padx=16, pady=(12, 4))
-        tk.Label(self, text="FFmpeg was not found.\nChoose one of the options below to set it up.",
+        tk.Label(self, text=_t("ffmpeg_subtitle"),
+                 font=("", 11, "bold"), justify=tk.CENTER).pack(padx=16, pady=(12, 4))
+        tk.Label(self, text=_t("ffmpeg_not_found"),
                  justify=tk.LEFT).pack(padx=16, pady=(0, 6))
         if is_win:
-            af = tk.LabelFrame(self, text="① Auto Download (Recommended, ~100MB)", padx=8, pady=6)
+            af = tk.LabelFrame(self, text=_t("ffmpeg_auto_label"), padx=8, pady=6)
             af.pack(fill=tk.X, padx=16, pady=(0, 6))
-            tk.Label(af, text=f"Download URL:\n{FFMPEG_DL_URL}",
-                     fg="#888888", font=("", 7), justify=tk.LEFT, wraplength=420).pack(anchor="w", pady=(0, 6))
+            tk.Label(af, text=f"{_t('ffmpeg_dl_url_label')}\n{FFMPEG_DL_URL}",
+                     fg="#444", font=("", 9), justify=tk.LEFT, wraplength=420).pack(anchor="w", pady=(0, 6))
             self._progress_var = tk.StringVar(value="")
-            tk.Label(af, textvariable=self._progress_var, fg="#1565C0", font=("", 8)).pack(anchor="w")
-            self._dl_btn = tk.Button(af, text="Download FFmpeg Automatically",
+            tk.Label(af, textvariable=self._progress_var, fg="#1565C0", font=("", 9)).pack(anchor="w")
+            self._dl_btn = tk.Button(af, text=_t("ffmpeg_dl_btn"),
                                      command=self._auto_download, bg="#1565C0", fg="white",
                                      font=("", 10, "bold"), relief=tk.FLAT, padx=12, pady=5, cursor="hand2")
             self._dl_btn.pack(pady=(6, 0))
         num = "②" if is_win else "①"
-        mf = tk.LabelFrame(self, text=f"{num} Manual Install", padx=8, pady=6)
+        mf = tk.LabelFrame(self, text=f"{num} {_t('ffmpeg_manual_label')}", padx=8, pady=6)
         mf.pack(fill=tk.X, padx=16, pady=(0, 6))
-        tk.Label(mf, text=(
-            "Official site: https://ffmpeg.org/download.html\n"
-            "Place ffmpeg.exe in a folder on your PATH and restart.\n\n"
-            "Or run in PowerShell / Terminal:\n  winget install ffmpeg"
-            if is_win else
-            "macOS:   brew install ffmpeg\n"
-            "Ubuntu:  sudo apt install ffmpeg\n"
-            "Other:   https://ffmpeg.org/download.html"
-        ), justify=tk.LEFT, fg="#333", font=("", 8)).pack(anchor="w")
-        tk.Label(self, text="* Skipping will disable MP3 / AAC / OPUS playback.\n"
-                            "  WAV / FLAC / OGG / AIFF will still work.",
+
+        # 編集不可・選択可のテキストエリア
+        manual_text = _t("ffmpeg_manual_win") if is_win else _t("ffmpeg_manual_other")
+        txt = tk.Text(mf, height=6, font=("", 9), relief=tk.FLAT, bd=1,
+                      wrap=tk.WORD, cursor="arrow",
+                      bg="#f5f5f5", fg="#333")
+        txt.insert("1.0", manual_text)
+        txt.configure(state=tk.DISABLED)   # 編集不可・選択はできる
+        txt.pack(fill=tk.X, pady=(0, 6))
+
+        # クリック可能なリンク
+        links_frame = tk.Frame(mf)
+        links_frame.pack(anchor="w")
+        tk.Label(links_frame, text="🔗 ", font=("", 9)).pack(side=tk.LEFT)
+        link = tk.Label(links_frame,
+                        text="https://ffmpeg.org/download.html",
+                        font=("", 9, "underline"), fg="#1565C0", cursor="hand2")
+        link.pack(side=tk.LEFT)
+        link.bind("<Button-1>", lambda _: __import__("webbrowser").open("https://ffmpeg.org/download.html"))
+        tk.Label(self, text=_t("ffmpeg_skip_note"),
                  fg="#888", font=("", 8), justify=tk.LEFT).pack(padx=16, pady=(0, 4))
-        tk.Button(self, text="Skip", command=self._on_skip,
+        tk.Button(self, text=_t("ffmpeg_skip_btn"), command=self._on_skip,
                   relief=tk.FLAT, padx=12, pady=4).pack(pady=(0, 12))
 
     def _auto_download(self):
-        self._dl_btn.config(state=tk.DISABLED, text="Downloading...")
-        threading.Thread(
-            target=lambda: self.after(0, lambda: self._on_download_done(
-                download_ffmpeg_windows(progress_cb=lambda m: self._progress_var.set(m))
-            )), daemon=True,
-        ).start()
+        self._dl_btn.config(state=tk.DISABLED, text=_t("ffmpeg_downloading"))
+
+        def _cb(msg: str) -> None:
+            self.after(0, lambda m=msg: self._progress_var.set(m))
+
+        def _run() -> None:
+            ok = download_ffmpeg_windows(progress_cb=_cb)
+            self.after(0, lambda: self._on_download_done(ok))
+
+        threading.Thread(target=_run, daemon=True).start()
 
     def _on_download_done(self, ok):
         if ok:
             self.result = True
-            messagebox.showinfo("Complete", "FFmpeg installed.\nMP3 / AAC / OPUS can now be played.", parent=self)
+            messagebox.showinfo(_t("ffmpeg_done_title"), _t("ffmpeg_done_msg"), parent=self)
             self.destroy()
         else:
-            self._progress_var.set("Failed. Please install manually.")
-            self._dl_btn.config(state=tk.NORMAL, text="Retry")
+            self._progress_var.set(_t("ffmpeg_failed_msg"))
+            self._dl_btn.config(state=tk.NORMAL, text=_t("ffmpeg_retry_btn"))
 
     def _on_skip(self):
         self.result = False
@@ -638,12 +650,13 @@ class PositionCanvas(tk.Canvas):
     SIZE   = 158
     RADIUS = 66
 
-    def __init__(self, parent, az_var, dist_var) -> None:
+    def __init__(self, parent, az_var, dist_var, az_rnd_var=None) -> None:
         super().__init__(parent, width=self.SIZE, height=self.SIZE,
                          bg="#10101e", highlightthickness=1, highlightbackground="#555",
                          cursor="crosshair")
-        self._az_var   = az_var
-        self._dist_var = dist_var
+        self._az_var     = az_var
+        self._dist_var   = dist_var
+        self._az_rnd_var = az_rnd_var  # 変動幅（扇形表示に使用）
         self._cx = self.SIZE // 2
         self._cy = self.SIZE // 2
         self._draw_grid()
@@ -652,6 +665,8 @@ class PositionCanvas(tk.Canvas):
         self.bind("<B1-Motion>", self._on_click)
         az_var.trace_add(  "write", lambda *_: self.after(10, self.update_marker))
         dist_var.trace_add("write", lambda *_: self.after(10, self.update_marker))
+        if az_rnd_var is not None:
+            az_rnd_var.trace_add("write", lambda *_: self.after(10, self.update_marker))
 
     def _draw_grid(self) -> None:
         cx, cy, r = self._cx, self._cy, self.RADIUS
@@ -677,6 +692,38 @@ class PositionCanvas(tk.Canvas):
         az_r = np.radians(az_deg)
         mx = int(cx + np.sin(az_r) * dist * r)
         my = int(cy - np.cos(az_r) * dist * r)
+
+        # ── アジマス変動幅を扇形で描画 ──────────────────
+        if self._az_rnd_var is not None:
+            try:
+                rnd_deg = float(self._az_rnd_var.get())
+            except (ValueError, tk.TclError):
+                rnd_deg = 0.0
+
+            if rnd_deg > 0:
+                arc_r = int(r * max(dist, 0.15))
+                # tkinter の create_arc は「時計 12 時を 90°、反時計回り」の座標系なので変換する
+                # アプリ座標系: 0°=前(上) 時計回り正  → tkinter: start=90-az-rnd extent=2*rnd
+                start_tk = 90 - az_deg - rnd_deg
+                extent_tk = rnd_deg * 2
+                self.create_arc(
+                    cx - arc_r, cy - arc_r, cx + arc_r, cy + arc_r,
+                    start=start_tk, extent=extent_tk,
+                    fill="",
+                    outline="#00BCD4",
+                    width=2,
+                    style=tk.ARC,
+                    tags="marker",
+                )
+                # 変動幅の端の線
+                for sign in (-1, 1):
+                    edge_r = np.radians(az_deg + sign * rnd_deg)
+                    ex = int(cx + np.sin(edge_r) * dist * r)
+                    ey = int(cy - np.cos(edge_r) * dist * r)
+                    self.create_line(cx, cy, ex, ey,
+                                     fill="#00BCD4", width=1, dash=(3, 4), tags="marker")
+
+        # ── メインマーカー ──────────────────────────────
         self.create_line(cx, cy, mx, my, fill="#00BCD4", width=1, dash=(4, 3), tags="marker")
         self.create_oval(mx-7, my-7, mx+7, my+7,
                          fill="#00BCD4" if az_deg >= 0 else "#FF7043",
@@ -689,6 +736,26 @@ class PositionCanvas(tk.Canvas):
         self._az_var.set(  round(float(np.degrees(np.arctan2(dx, -dy))), 1))
         self._dist_var.set(round(float(np.clip(np.sqrt(dx**2 + dy**2) / self.RADIUS, 0.0, 1.0)), 3))
 
+    def show_actual_pos(self, az_deg: float, dist: float) -> None:
+        """
+        実際の再生アジマス（ランダム後の確定値）を小さい◯で表示する。
+        設定値マーカーと区別するため白抜きの小◯で描画する。
+        """
+        self.delete("actual")
+        cx, cy, r = self._cx, self._cy, self.RADIUS
+        az_r = np.radians(az_deg)
+        px = int(cx + np.sin(az_r) * dist * r)
+        py = int(cy - np.cos(az_r) * dist * r)
+        # 外側の白◯
+        self.create_oval(px-5, py-5, px+5, py+5,
+                         fill="", outline="white", width=1, tags="actual")
+        # 内側の小◯（色でランダム値であることを示す）
+        self.create_oval(px-2, py-2, px+2, py+2,
+                         fill="#FFC107", outline="", tags="actual")
+
+    def clear_actual_pos(self) -> None:
+        self.delete("actual")
+
 
 # ──────────────────────────────────────────────────────
 # Player panel
@@ -696,7 +763,6 @@ class PositionCanvas(tk.Canvas):
 
 DEFAULT_VOL  = 80
 DEFAULT_SPD  = 100
-DEFAULT_EL   = 0.0
 DEFAULT_DIST = 0.6
 DEFAULT_RND  = 0
 DEFAULT_AZ   = {"left": -45.0, "right": 45.0}
@@ -735,7 +801,6 @@ class PlayerPanel(tk.Frame):
 
         default_az = DEFAULT_AZ[side]
         self._az_var   = tk.DoubleVar(value=saved.get("azimuth",   default_az))
-        self._el_var   = tk.DoubleVar(value=saved.get("elevation", DEFAULT_EL))
         self._dist_var = tk.DoubleVar(value=saved.get("distance",  DEFAULT_DIST))
         self._az_rnd   = tk.IntVar(   value=saved.get("az_rnd",    DEFAULT_RND))
         self._vol_var  = tk.IntVar(   value=saved.get("volume",    DEFAULT_VOL))
@@ -805,32 +870,19 @@ class PlayerPanel(tk.Frame):
         pos_cols = tk.Frame(pos_frame)
         pos_cols.pack(fill=tk.X)
 
-        # 左カラム：俯瞰マップ + 仰角
+        # 左カラム：俯瞰マップ
         left_col = tk.Frame(pos_cols)
         left_col.pack(side=tk.LEFT, fill=tk.Y)
 
-        pos_inner = tk.Frame(left_col)
-        pos_inner.pack()
-
-        self._pos_canvas = PositionCanvas(pos_inner, self._az_var, self._dist_var)
-        self._pos_canvas.pack(side=tk.LEFT, padx=(0, 4))
-
-        el_col = tk.Frame(pos_inner)
-        el_col.pack(side=tk.LEFT, fill=tk.Y)
-        tk.Label(el_col, text=_t("elevation"), font=("", 8)).pack()
-        tk.Scale(
-            el_col, variable=self._el_var,
-            from_=90, to=-90, resolution=5,
-            orient=tk.VERTICAL, showvalue=False, length=108,
-        ).pack()
-        tk.Label(el_col, textvariable=self._el_var, font=("", 8), width=4).pack()
+        self._pos_canvas = PositionCanvas(left_col, self._az_var, self._dist_var, self._az_rnd)
+        self._pos_canvas.pack(padx=(0, 4))
 
         az_row = tk.Frame(left_col)
         az_row.pack(fill=tk.X, pady=(3, 0))
         tk.Label(az_row, text=_t("az_random"), font=("", 8), fg="#555").pack(side=tk.LEFT)
         tk.Spinbox(
             az_row, textvariable=self._az_rnd,
-            from_=0, to=90, increment=10, width=4, font=("", 9),
+            from_=0, to=180, increment=10, width=4, font=("", 9),
         ).pack(side=tk.LEFT, padx=(4, 0))
 
         # 右カラム：音量・速度 + 再生/モードボタン
@@ -961,7 +1013,7 @@ class PlayerPanel(tk.Frame):
         )
 
     def _register_rt_traces(self) -> None:
-        for var in (self._az_var, self._el_var, self._dist_var, self._vol_var):
+        for var in (self._az_var, self._dist_var, self._vol_var):
             var.trace_add("write", lambda *_: self._schedule_rt_update())
 
     def _schedule_rt_update(self) -> None:
@@ -977,7 +1029,6 @@ class PlayerPanel(tk.Frame):
     def _current_position(self) -> BinauralPosition:
         return BinauralPosition(
             azimuth=float(self._az_var.get()),
-            elevation=float(self._el_var.get()),
             distance=float(self._dist_var.get()),
         )
 
@@ -1182,11 +1233,11 @@ class PlayerPanel(tk.Frame):
 
     def _effective_settings(self) -> tuple[BinauralPosition, int, int]:
         az   = vary_float(self._az_var.get(), float(self._az_rnd.get()), -180.0, 180.0)
-        el   = float(self._el_var.get())
         dist = float(self._dist_var.get())
         vol  = vary_int(self._vol_var.get(), self._vol_rnd.get(),  0, 100, step=10)
         spd  = vary_int(self._spd_var.get(), self._spd_rnd.get(), 50, 200, step=1)
-        return BinauralPosition(azimuth=az, elevation=el, distance=dist), vol, spd
+        self._pos_canvas.show_actual_pos(az, dist)
+        return BinauralPosition(azimuth=az, distance=dist), vol, spd
 
     def _resolve_next_index(self) -> int:
         if self._play_mode == PlayMode.RANDOM:
@@ -1200,6 +1251,7 @@ class PlayerPanel(tk.Frame):
         self._keep_playing   = False
         self.engine.stop()
         self._set_button_state(playing=False)
+        self._pos_canvas.clear_actual_pos()
 
     # ── External interface ────────────────────────────
 
@@ -1217,7 +1269,6 @@ class PlayerPanel(tk.Frame):
         self._update_empty_hint()
         # 位置・音量・速度を初期値に戻す
         self._az_var.set(DEFAULT_AZ[self.side])
-        self._el_var.set(DEFAULT_EL)
         self._dist_var.set(DEFAULT_DIST)
         self._az_rnd.set(DEFAULT_RND)
         self._vol_var.set(DEFAULT_VOL)
@@ -1242,7 +1293,6 @@ class PlayerPanel(tk.Frame):
         return {
             "files":     [str(f.path) for f in self._files],
             "azimuth":   self._az_var.get(),
-            "elevation": self._el_var.get(),
             "distance":  self._dist_var.get(),
             "az_rnd":    self._az_rnd.get(),
             "volume":    _read_entry(self._vol_entry, self._vol_var.get()),
@@ -1256,7 +1306,6 @@ class PlayerPanel(tk.Frame):
         self._stop()
         default_az = DEFAULT_AZ[self.side]
         self._az_var.set(  saved.get("azimuth",   default_az))
-        self._el_var.set(  saved.get("elevation", DEFAULT_EL))
         self._dist_var.set(saved.get("distance",  DEFAULT_DIST))
         self._az_rnd.set(  saved.get("az_rnd",    DEFAULT_RND))
         self._vol_var.set( saved.get("volume",    DEFAULT_VOL))
